@@ -132,6 +132,11 @@ static void sensor_reader_thread_fn(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
+	if (dev == NULL) {
+		LOG_ERR("Kein gültiges Gerät übergeben – Thread wird beendet");
+		return;
+	}
+
 	LOG_INF("Sensor-Thread gestartet – lese alle %d ms", SENSOR_READER_INTERVAL_MS);
 
 	/* Endlos-Schleife: der Thread läuft solange das Gerät eingeschaltet ist */
