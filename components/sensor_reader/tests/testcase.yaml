@@ -1,6 +1,6 @@
 tests:
-  components.component_a:
-    tags: component_a
+  components.sensor_reader:
+    tags: sensor_reader
     platform_allow:
       - native_sim
       - native_sim/native/64
