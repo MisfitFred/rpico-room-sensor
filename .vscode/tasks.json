@@ -14,8 +14,6 @@
         "-d",
         "${workspaceFolder}/build",
         "${workspaceFolder}",
-        "-S",
-        "usb_serial_port",
         "--",
         "-DOPENOCD=${userHome}/.pico-sdk/openocd/0.12.0+dev/openocd",
         "-DOPENOCD_DEFAULT_PATH=${userHome}/.pico-sdk/openocd/0.12.0+dev/scripts"

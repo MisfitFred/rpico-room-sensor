@@ -1,0 +1,53 @@
+/* I2C0: BME280-Sensoren (GP4 = SDA, GP5 = SCL) */
+&i2c0 {
+    status = "okay";
+
+    bme280_76: bme280@76 {
+        compatible = "bosch,bme280";
+        reg = <0x76>;
+        status = "okay";
+    };
+
+    bme280_77: bme280@77 {
+        compatible = "bosch,bme280";
+        reg = <0x77>;
+        status = "okay";
+    };
+};
+
+/* I2C1: PCF8574T LCD-Backpack (GP6 = SDA, GP7 = SCL) */
+&i2c1 {
+    status = "okay";
+
+    pcf8574t: pcf8574t@27 {
+        compatible = "nxp,pcf857x";
+        reg = <0x27>;
+        gpio-controller;
+        #gpio-cells = <2>;
+        ngpios = <8>;
+        status = "okay";
+    };
+};
+
+/* HD44780 16x2 LCD ueber den PCF8574T-Backpack */
+/ {
+    auxdisplay_0: auxdisplay {
+        compatible = "hit,hd44780";
+        status = "okay";
+        columns = <16>;
+        rows = <2>;
+        mode = <4>;
+        boot-delay-ms = <50>;
+
+        register-select-gpios = <&pcf8574t 0 GPIO_ACTIVE_HIGH>;
+        /* read-write-gpios nicht konfiguriert – Treiber nutzt feste Delays statt I2C-Busy-Polling */
+        enable-gpios          = <&pcf8574t 2 GPIO_ACTIVE_HIGH>;
+        backlight-gpios       = <&pcf8574t 3 GPIO_ACTIVE_HIGH>;
+
+        data-bus-gpios = <0>, <0>, <0>, <0>,
+                         <&pcf8574t 4 GPIO_ACTIVE_HIGH>,
+                         <&pcf8574t 5 GPIO_ACTIVE_HIGH>,
+                         <&pcf8574t 6 GPIO_ACTIVE_HIGH>,
+                         <&pcf8574t 7 GPIO_ACTIVE_HIGH>;
+    };
+};

@@ -17,5 +17,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr-pico-w-starter LANGUAGES C)
 
 add_subdirectory(components/main)
-add_subdirectory(components/component_a)
-add_subdirectory(components/component_b)
+add_subdirectory(components/sensor_reader)
