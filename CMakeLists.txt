@@ -18,4 +18,3 @@ project(zephyr-pico-w-starter LANGUAGES C)
 
 add_subdirectory(components/main)
 add_subdirectory(components/sensor_reader)
-add_subdirectory(components/component_b)
