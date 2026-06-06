@@ -18,8 +18,8 @@
  * - kernel.h      → Zephyr-Betriebssystem-Funktionen (z.B. Threads, Sleep)
  * - auxdisplay.h  → Funktionen für Text-Displays (HD44780 über PCF8574T) */
 #include <zephyr/device.h>
-#include <zephyr/kernel.h>
 #include <zephyr/drivers/auxdisplay.h>
+#include <zephyr/kernel.h>
 
 /* -----------------------------------------------------------------------
  * Einstellungen (können hier leicht geändert werden)
