@@ -3,11 +3,13 @@
 ## Das große Bild
 
 ```
-        [ Dein Computer ]          [ GitHub (Internet) ]
-        ─────────────────          ────────────────────
-        Dateien ändern    ──────►  Repository (Projektordner)
-        git commit                 = Code + gesamte History
-        git push
+        [ Dein Computer ]                [ GitHub (Internet) ]
+        ─────────────────                ────────────────────
+                           git push ──►
+        Dateien ändern                   Repository (Projektordner)
+        git commit                       = Code + gesamte History
+                           git pull ◄──
+                        (Änderungen holen)
 ```
 
 ---
@@ -59,9 +61,11 @@ PULL REQUEST  =  "Ich möchte meinen Code einbauen"
 ```
   [ Quellcode ]      [ Compiler ]      [ Firmware ]      [ Gerät ]
   ─────────────      ────────────      ────────────      ────────
-  main.c        ──►  übersetzt    ──►  program.uf2  ──►  Pico W
-  sensor.c          (für Menschen       (für den         blinkt!
-  config.h           lesbar)            Computer)
+  main.c        ──►  übersetzt    ──►  zephyr.uf2   ──►  Pico W
+  sensor.c           (für den                            blinkt!
+  config.h           Computer)
+  (für Menschen 
+  lesbar)                     
 ```
 
 ```
@@ -87,8 +91,9 @@ PULL REQUEST  =  "Ich möchte meinen Code einbauen"
   ─────────────               ────────────
   Code läuft durch            Code hält an bestimmten
   → Fehler passiert             Stellen an  (Breakpoint)
-  → Wo? Keine Ahnung!         → Man kann reinschauen:
-                                  Welchen Wert hat Variable x?
+  → Wo? Keine Ahnung!
+         → Man kann reinschauen:
+                                 Welchen Wert hat Variable x?
                                   Was passiert als nächstes?
 ```
 
@@ -111,34 +116,7 @@ PULL REQUEST  =  "Ich möchte meinen Code einbauen"
 
 ---
 
-# Wie sieht echter Code aus?
 
-## Ein einfaches Beispiel – LED blinkt
-
-```
-  Was der Mensch will:       Was der Computer versteht:
-  ──────────────────         ──────────────────────────
-  "Lass die LED              led_on();
-   an und aus gehen"         warte(1 Sekunde);
-                             led_off();
-                             warte(1 Sekunde);
-                             → von vorne ...
-```
-
-```c
-// So sieht das in echtem Code aus:
-
-while (true) {          // ← "mache das für immer"
-    led_on();           // ← LED einschalten
-    k_sleep(1000);      // ← 1 Sekunde warten
-    led_off();          // ← LED ausschalten
-    k_sleep(1000);      // ← 1 Sekunde warten
-}
-```
-
-> Jede Zeile = ein Befehl. Der Computer führt sie **der Reihe nach** aus.
-
----
 
 # Das Projekt – Raum-Sensor
 
@@ -146,7 +124,7 @@ while (true) {          // ← "mache das für immer"
 
 ```
                         ┌─────────────────┐
-                        │    Pico W        │
+                        │    Pico W       │
    ┌──────────┐         │                 │         ┌──────────────┐
    │  Sensor  │──────►  │  liest Daten    │ ──────► │   Bildschirm │
    │          │         │  verarbeitet    │  Kabel  │   zeigt an   │
@@ -178,27 +156,35 @@ while (true) {          // ← "mache das für immer"
 ## Wie ist die Hardware aufgebaut?
 
 ```
-                        ┌──────────────────────────┐
-                        │         Pico W            │
-                        │                           │
-   ┌──────────┐         │  I2C Bus 0                │
-   │ BME280 A │─────────│  GP4 (SDA) / GP5 (SCL)   │
-   │ (0x76)   │         │                           │
-   ├──────────┤         │  I2C Bus 1                │    ┌───────────┐   ┌──────────────────┐
-   │ BME280 B │─────────│  GP6 (SDA) / GP7 (SCL)   │───►│ PCF8574T  │──►│ LCD 16x2         │
-   │ (0x77)   │         │                           │    │ (0x27)    │   │ A: 24.5C 1013hPa │
-   └──────────┘         └──────────────────────────┘    └───────────┘   │ B: 23.2C 1012hPa │
-                                                                          └──────────────────┘
-  Sensoren:   eigene Adressen  →  0x76  und  0x77
-  PCF8574T:   Zwischenstecker für das Display  →  Adresse 0x27
-  → so weiß der Pico W immer, wer gerade gemeint ist
+  ┌─────────────┐                        ┌─────────────────────────────┐
+  │  BME280 A   │                        │           Pico W            │
+  │  Adresse    │                        │                             │
+  │   0x76      │──SDA──► GP4            │  I2C Bus 0  (GP4 + GP5)     │
+  │             │──SCL──► GP5 ───────────│  → liest Sensor A & B       │
+  ├─────────────┤                        │                             │
+  │  BME280 B   │──SDA──► GP4            │                             │
+  │  Adresse    │──SCL──► GP5            │                             │
+  │   0x77      │                        │                             │
+  └─────────────┘                        │  I2C Bus 1  (GP6 + GP7)     │
+                                         │  → steuert das Display      │
+  ┌─────────────┐                        │                             │
+  │  PCF8574T   │──SDA──► GP6 ───────────│                             │
+  │  (Zwischen- │──SCL──► GP7            │                             │
+  │   stecker)  │                        └─────────────────────────────┘
+  │  Adresse    │
+  │   0x27      │──► LCD 16x2
+  └─────────────┘    ┌──────────────────┐
+                     │ A: 24.5C 1013hPa │
+                     │ B: 23.2C 1012hPa │
+                     └──────────────────┘
 ```
 
 ```
-  Alle Teile sind per Kabel verbunden:
-  SDA  →  Datenleitung  (schickt die Messwerte)
-  SCL  →  Taktleitung   (gibt den Rhythmus vor)
-  VCC  →  Strom
+  Jedes Kabel hat eine Aufgabe:
+
+  SDA  →  Datenleitung  (hier fließen die Messwerte)
+  SCL  →  Taktleitung   (gibt den Rhythmus vor, wann Daten kommen)
+  VCC  →  Strom (Plus)
   GND  →  Masse (Minus)
 ```
 
@@ -210,12 +196,12 @@ while (true) {          // ← "mache das für immer"
   ┌─────────────────────────────────┐
   │           BME280                │
   │                                 │
-  │  Temperatur   →  z.B. 24.5 °C  │
-  │  Luftdruck    →  z.B. 1013 hPa │
+  │  Temperatur   →  z.B. 24.5 °C   │
+  │  Luftdruck    →  z.B. 1013 hPa  │
   └─────────────────────────────────┘
 
   Im Projekt: 2 Sensoren gleichzeitig  →  Sensor A & Sensor B
-  Beide Werte werden jede Sekunde gemessen und auf dem Display angezeigt
+  Beide Werte werden jede Sekunde vom Programm abgefragt und auf dem Display angezeigt
 ```
 
 ## Was ist I2C?
@@ -226,18 +212,18 @@ while (true) {          // ← "mache das für immer"
 
   Pico W fragt Sensor A:
   ┌──────────┐  "Hey 0x76, gib mir die Temperatur!"  ┌──────────┐
-  │  Pico W  │ ─────────────────────────────────────► │ BME280 A │
-  │          │ ◄───────────────────────────────────── │ (0x76)   │
+  │  Pico W  │ ────────────────────────────────────► │ BME280 A │
+  │          │ ◄──────────────────────────────────── │ (0x76)   │
   └──────────┘            "24.5 °C !"                └──────────┘
 
   Pico W fragt Sensor B:
   ┌──────────┐  "Hey 0x77, gib mir die Temperatur!"  ┌──────────┐
-  │  Pico W  │ ─────────────────────────────────────► │ BME280 B │
-  │          │ ◄───────────────────────────────────── │ (0x77)   │
+  │  Pico W  │ ─────────────────────────────────────►│ BME280 B │
+  │          │ ◄─────────────────────────────────────│ (0x77)   │
   └──────────┘            "23.2 °C !"                └──────────┘
 
-  → Pico W fragt   = Master
-  → Sensoren antworten = Slaves
+  → Pico W fragt   = Controller
+  → Sensoren antworten = Peripheral
   → Adresse (0x76 / 0x77) verhindert Verwechslung
 ```
 
@@ -260,4 +246,28 @@ while (true) {          // ← "mache das für immer"
 
   Treiber aktivieren  →  eine Zeile in der Konfiguration:
   CONFIG_BME280=y     →  "ja, benutze den BME280-Treiber"
+```
+
+```
+  SW-Architektur – wo sitzt was?
+
+  ┌─────────────────────────────────────────────┐
+  │                 Anwendung                   │  ← unser Code
+  │           sensor_reader.c                   │     "lies Temperatur"
+  └───────────────────┬─────────────────────────┘
+                      │ benutzt
+  ┌───────────────────▼─────────────────────────┐
+  │              Zephyr RTOS                    │  ← Betriebssystem
+  │         sensor_fetch / sensor_get           │
+  └───────────────────┬─────────────────────────┘
+                      │ ruft auf
+  ┌───────────────────▼─────────────────────────┐
+  │            BME280-Treiber                   │  ← Übersetzer
+  │        (mitgeliefert von Zephyr)            │
+  └───────────────────┬─────────────────────────┘
+                      │ spricht über I2C
+  ┌───────────────────▼─────────────────────────┐
+  │             BME280-Sensor                   │  ← Hardware
+  │          (echte Elektronik)                 │
+  └─────────────────────────────────────────────┘
 ```
